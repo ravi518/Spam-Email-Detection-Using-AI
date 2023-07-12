@@ -1,0 +1,222 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Importing the dependencies
+
+# In[1]:
+
+
+import numpy as np 
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn import metrics
+from sklearn.metrics import accuracy_score, precision_score, classification_report
+
+
+#  Data Collection and Preprocessing
+
+# In[2]:
+
+
+#loading data from csv file to a pandas dataframe
+raw_mail_data = pd.read_csv('./mail_data.csv')
+
+
+# In[3]:
+
+
+print(raw_mail_data)
+
+
+# In[4]:
+
+
+#replace all the null values with the null string
+mail_data = raw_mail_data.where((pd.notnull(raw_mail_data)),'')
+
+
+# In[6]:
+
+
+#checking the number of rows and column in the dataframe
+mail_data.shape
+
+
+# Label Encoding
+
+# In[7]:
+
+
+#label spam mail as 0 and ham mail as 1;
+
+mail_data.loc[mail_data['Category'] == 'spam', 'Category',] = 0
+mail_data.loc[mail_data['Category'] == 'ham', 'Category',] = 1
+
+
+# spam - 0
+# ham - 1
+
+# In[8]:
+
+
+# seperating the data as text and label
+# x --message
+# y --category
+
+x = mail_data['Message']
+
+y = mail_data['Category']
+
+
+# In[9]:
+
+
+print(x)
+
+
+# In[10]:
+
+
+print(y)
+
+
+# Splitting the data into training data and test data
+
+# In[11]:
+
+
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2, random_state=3)
+
+
+# In[12]:
+
+
+#print(x.shape)
+#print(x_train.shape)
+#print(x_test.shape)
+
+
+# Feature Extraction
+
+# In[13]:
+
+
+# transform the test data to feature vector 
+
+feature_extraction = TfidfVectorizer(min_df= 1, stop_words='english', lowercase='True')
+
+
+x_train_features = feature_extraction.fit_transform(x_train)
+x_test_features = feature_extraction.transform(x_test)
+
+
+#convert y_train and y_test values as integer
+
+y_train = y_train.astype('int')
+y_test = y_test.astype('int')
+
+
+# In[14]:
+
+
+#print(x_train)
+
+
+# In[15]:
+
+
+#print(x_train_features)
+
+
+# Training the model
+
+# Logistic Regression
+
+# In[16]:
+
+
+model = MultinomialNB()
+
+
+# In[17]:
+
+
+# traning hte logistic Regression model with the training data
+model.fit(x_train_features, y_train )
+
+
+# Evaluating the trained model
+
+# In[18]:
+
+
+# prediction on training data
+
+prediction_on_training_data = model.predict(x_train_features)
+accuracy_on_training_data = accuracy_score(y_train, prediction_on_training_data)
+
+
+# In[19]:
+
+
+print(classification_report(y_train, prediction_on_training_data))
+print()
+print('Confusion Matrix: \n', metrics.confusion_matrix(y_train, prediction_on_training_data))
+print()
+print('Accuracy: ', accuracy_on_training_data)
+print()
+
+
+# In[20]:
+
+
+# prediction on test data
+
+prediction_on_test_data = model.predict(x_test_features)
+accuracy_on_test_data = accuracy_score(y_test, prediction_on_test_data)
+
+
+# In[21]:
+
+
+print(classification_report(y_test, prediction_on_test_data))
+print()
+print('Confusion Matrix: \n', metrics.confusion_matrix(y_test, prediction_on_test_data))
+print()
+print('Accuracy: ', accuracy_on_test_data)
+print()
+
+
+#  Building a Predicitive System
+#  
+
+# In[22]:
+
+
+input_mail = ["I've been searching for the right words to thank you for this breather. I promise i wont take your help for granted and will fulfil my promise. You have been wonderful and a blessing at all times"]
+#input_mail = ["congrats you have won 1000000 rupees price"]
+#input_mail = ["hello my friend i want to meet you and talk to on some personal issues."]
+
+# convert text to feature vectors
+input_data_features = feature_extraction.transform(input_mail)
+
+# making prediction
+
+prediction = model.predict(input_data_features)
+print(prediction)
+
+
+if (prediction[0]==1):
+  print('Ham mail')
+
+else:
+  print('Spam mail')
+
+
+# In[ ]:
+
+
+
+
