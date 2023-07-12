@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from gensim.models import Word2Vec
+from nltk.tokenize import word_tokenize
+from sklearn import metrics
+from sklearn.metrics import accuracy_score, precision_score, classification_report
+
+# Step 1: Load and Preprocess the Dataset
+# Assuming you have a dataset stored in a CSV file called 'emails.csv' with columns 'message' and 'category'
+import pandas as pd
+
+df = pd.read_csv('./mail_data.csv')
+emails = df['Message'].tolist()
+labels = df['Category'].tolist()
+
+preprocessed_emails = [word_tokenize(email.lower()) for email in emails]
+
+# Step 2: Word Embedding Generation
+word2vec_model = Word2Vec(preprocessed_emails, window=5, min_count=1)
+
+# Step 3: Feature Extraction
+email_vectors = np.array([np.mean([word2vec_model.wv[word] for word in email], axis=0) for email in preprocessed_emails])
+
+# Step 4: Training a Classifier
+X_train, X_test, y_train, y_test = train_test_split(email_vectors, labels, test_size=0.2, random_state=42)
+
+
+
+classifier = LogisticRegression()
+classifier.fit(X_train, y_train)
+
+# Step 5: Evaluation and Prediction
+accuracy = classifier.score(X_test, y_test)
+
+print(accuracy)
+
+# Predicting new emails
+def predict_spam(email):
+    preprocessed_email = word_tokenize(email.lower())
+    email_vector = np.mean([word2vec_model.wv[word] for word in preprocessed_email], axis=0)
+    prediction = classifier.predict([email_vector])
+    return prediction[0]
+
+
+# In[2]:
+
+
+prediction_on_training_data = classifier.predict(X_train)
+print(classification_report(y_train, prediction_on_training_data))
+print()
+
